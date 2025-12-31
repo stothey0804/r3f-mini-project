@@ -1,4 +1,5 @@
-import { OrbitControls } from "@react-three/drei";
+import { useRef } from "react";
+import { OrbitControls, useHelper } from "@react-three/drei";
 import "./App.css";
 import { Canvas, useLoader } from "@react-three/fiber";
 
@@ -54,6 +55,8 @@ const CardComponent = ({ position, rotationY, rotationZ, imageUrl }) => {
 
   return (
     <mesh
+      castShadow
+      receiveShadow
       position={position}
       rotation-y={THREE.MathUtils.degToRad(rotationY)}
       rotation-z={THREE.MathUtils.degToRad(rotationZ)}
@@ -64,16 +67,34 @@ const CardComponent = ({ position, rotationY, rotationZ, imageUrl }) => {
   );
 };
 
+const Elements = () => {
+  const lightRef = useRef(null);
+  useHelper(lightRef, THREE.DirectionalLightHelper, 1, "blue");
+
+  return (
+    <>
+      <OrbitControls />
+      <ambientLight intensity={0.7} />
+      <directionalLight
+        castShadow
+        ref={lightRef}
+        intensity={4}
+        target-position={[0, -1, 0]}
+        shadow-mapSize={[5000, 5000]}
+        position={[-4, -2.1, 4]}
+      />
+      {cardData.map((props) => (
+        <CardComponent key={props.imageUrl} {...props} />
+      ))}
+    </>
+  );
+};
+
 function App() {
   return (
     <>
-      <Canvas>
-        <OrbitControls />
-        <ambientLight intensity={0.7} />
-        <directionalLight intensity={4} position={[4, 1, 4]} />
-        {cardData.map((props) => (
-          <CardComponent key={props.imageUrl} {...props} />
-        ))}
+      <Canvas shadows>
+        <Elements />
       </Canvas>
     </>
   );
