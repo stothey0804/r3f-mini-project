@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { OrbitControls, useHelper } from "@react-three/drei";
 import { Canvas, useLoader, useThree, useFrame } from "@react-three/fiber";
 import { useControls } from "leva";
+import { useSpring, animated } from "@react-spring/three";
 
 import * as THREE from "three";
 
@@ -41,32 +42,78 @@ const cardData = [
 ];
 
 const CardComponent = ({ position, rotationY, rotationZ, imageUrl }) => {
+  const [hovered, setHovered] = useState(false);
   const texture = useLoader(THREE.TextureLoader, imageUrl);
   texture.colorSpace = THREE.SRGBColorSpace;
 
-  const materials = [
-    new THREE.MeshStandardMaterial(), // 오른쪽
-    new THREE.MeshStandardMaterial(), // 왼쪽
-    new THREE.MeshStandardMaterial(), // 윗면
-    new THREE.MeshStandardMaterial(), // 바닥면
-    new THREE.MeshStandardMaterial({
-      map: texture,
-    }), // 앞면 (이미지 적용)
-    new THREE.MeshStandardMaterial(), // 뒷면
-  ];
+  const materials = createMaterials(texture);
+
+  const props = useSpring({
+    scale: hovered ? [1.1, 1.1, 1] : [1, 1, 1],
+    position: calculatePosition(position, hovered),
+    rotation: calculateRotation(rotationY, rotationZ, hovered),
+    config: { mass: 5, tension: 400, friction: 100 },
+  });
+
+  const handleCardClick = (e) => {
+    e.stopPropagation();
+    alert(imageUrl.slice(1).split(".")[0]);
+  };
 
   return (
-    <mesh
+    <animated.mesh
       castShadow
       receiveShadow
-      position={position}
-      rotation-y={THREE.MathUtils.degToRad(rotationY)}
-      rotation-z={THREE.MathUtils.degToRad(rotationZ)}
+      onClick={handleCardClick}
+      onPointerEnter={(e) => {
+        e.stopPropagation();
+        setHovered(true);
+      }}
+      onPointerLeave={(e) => {
+        e.stopPropagation();
+        setHovered(false);
+      }}
+      {...props}
       material={materials}
     >
       <boxGeometry args={[1, 1.6, 0.01]} />
-    </mesh>
+    </animated.mesh>
   );
+};
+
+const createMaterials = (texture) => {
+  return [
+    new THREE.MeshStandardMaterial(), // 뒷면
+    new THREE.MeshStandardMaterial(), // 앞면
+    new THREE.MeshStandardMaterial(), // 윗면
+    new THREE.MeshStandardMaterial(), // 바닥면
+    new THREE.MeshStandardMaterial({ map: texture, toneMapped: true }), // 앞면 (이미지 적용)
+    new THREE.MeshStandardMaterial(), // 뒷면
+  ];
+};
+
+const calculatePosition = (position, hovered) => {
+  return hovered ? [position[0], position[1] + 0.5, position[2]] : position;
+};
+
+const adjustRotation = (rotation, adjustment) => {
+  return rotation === 0 ? rotation : rotation + adjustment;
+};
+
+const calculateRotation = (rotationY, rotationZ, hovered) => {
+  return hovered
+    ? [
+        0,
+        THREE.MathUtils.degToRad(adjustRotation(rotationY, 5)),
+        THREE.MathUtils.degToRad(
+          adjustRotation(rotationZ, rotationZ > 0 ? -5 : 5)
+        ),
+      ]
+    : [
+        0,
+        THREE.MathUtils.degToRad(rotationY),
+        THREE.MathUtils.degToRad(rotationZ),
+      ];
 };
 
 const Elements = () => {
