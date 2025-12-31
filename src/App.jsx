@@ -72,23 +72,11 @@ const CardComponent = ({ position, rotationY, rotationZ, imageUrl }) => {
 const Elements = () => {
   const { camera } = useThree();
   const dirLight = useRef(null);
+
   useHelper(dirLight, THREE.DirectionalLightHelper, 1, "blue");
 
-  useControls({
-    positionZ: {
-      value: 3,
-      min: -10,
-      max: 10,
-      step: 0.1,
-      onChange: (v) => (camera.position.z = v),
-    },
-    lookAtY: {
-      value: 0,
-      min: -10,
-      max: 10,
-      step: 0.1,
-      onChange: (v) => camera.lookAt(0, v, 0),
-    },
+  useFrame(() => {
+    camera.lookAt(0, 0.5, 0);
   });
 
   return (
@@ -113,7 +101,7 @@ const Elements = () => {
 function App() {
   return (
     <>
-      <Canvas shadows>
+      <Canvas shadows camera={{ position: [0, 0, 3] }}>
         <Elements />
       </Canvas>
     </>
