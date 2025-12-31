@@ -1,9 +1,11 @@
 import { useRef } from "react";
 import { OrbitControls, useHelper } from "@react-three/drei";
-import "./App.css";
-import { Canvas, useLoader } from "@react-three/fiber";
+import { Canvas, useLoader, useThree, useFrame } from "@react-three/fiber";
+import { useControls } from "leva";
 
 import * as THREE from "three";
+
+import "./App.css";
 
 const cardData = [
   {
@@ -68,17 +70,35 @@ const CardComponent = ({ position, rotationY, rotationZ, imageUrl }) => {
 };
 
 const Elements = () => {
-  const lightRef = useRef(null);
-  useHelper(lightRef, THREE.DirectionalLightHelper, 1, "blue");
+  const { camera } = useThree();
+  const dirLight = useRef(null);
+  useHelper(dirLight, THREE.DirectionalLightHelper, 1, "blue");
+
+  useControls({
+    positionZ: {
+      value: 3,
+      min: -10,
+      max: 10,
+      step: 0.1,
+      onChange: (v) => (camera.position.z = v),
+    },
+    lookAtY: {
+      value: 0,
+      min: -10,
+      max: 10,
+      step: 0.1,
+      onChange: (v) => camera.lookAt(0, v, 0),
+    },
+  });
 
   return (
     <>
-      <OrbitControls />
+      {/* <OrbitControls /> */}
       <ambientLight intensity={0.7} />
       <directionalLight
+        ref={dirLight}
         castShadow
-        ref={lightRef}
-        intensity={4}
+        intensity={2}
         target-position={[0, -1, 0]}
         shadow-mapSize={[5000, 5000]}
         position={[-4, -2.1, 4]}
